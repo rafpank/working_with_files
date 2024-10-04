@@ -1,0 +1,49 @@
+import requests
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+}
+openable_links = []
+websites_to_check = []
+not_working_websites= []
+
+web_links_source = 'strony.txt'
+
+#function to open the file and remove whitespaces
+def file_opener (file_name):
+    with open (file_name, 'r', encoding='UTF-8') as file:
+        return [line.replace("\n", "") for line in file if line.startswith(('http://', 'https://'))]
+
+
+#function to check the status of a page
+def websites_checker (url):
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        return response.status_code
+    except requests.exceptions.ConnectionError:
+        return None
+
+#saving pages to file
+def save_url_to_file (file_name, url_list):
+    with open (file_name, 'w', encoding='UTF-8') as file:
+        file.write("\n".join(url_list))
+
+#main function which adds pages to the relevant lists
+def main (urls):
+    for url in urls:
+        status_code = websites_checker(url)
+        if status_code == 200:
+            openable_links.append(url)
+        elif status_code == 403:
+            websites_to_check.append(url)
+        else:
+            not_working_websites.append(url)
+
+
+#loading urls from a file
+urls = file_opener(web_links_source)
+
+main(urls)
+
+save_url_to_file('reachable_urls.txt', openable_links)
+save_url_to_file('to_verify_websites.txt', websites_to_check)
+save_url_to_file('unreachable_urls.txt', not_working_websites)
